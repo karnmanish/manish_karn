@@ -110,7 +110,7 @@
   function renderChannel(key){
     var container = document.getElementById('content-' + key);
     if (!container || container.dataset.rendered) return;
-    var info = (window.CHANNEL_INFO && CHANNEL_INFO[key]) || null;
+    var info = (typeof CHANNEL_INFO !== 'undefined' && CHANNEL_INFO[key]) || null;
     var playlists = (info && info.playlists) || [];
     var totalVideos = playlists.reduce(function(n,p){ return n + p.videos.length; }, 0);
     var html = '';

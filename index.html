@@ -8,7 +8,371 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,600;0,700;1,500;1,600&family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css">
+<style>
+  :root{
+    --bg:#FBF6EF;
+    --surface:#FFFFFF;
+    --surface-warm:#F2E7D8;
+    --ink:#241A12;
+    --ink-dim:#6E5D4C;
+    --ink-faint:#9C8D7C;
+    --brown:#8A3E1E;
+    --brown-dark:#5E2D14;
+    --brown-soft: rgba(138,62,30,0.09);
+    --line: rgba(36,26,18,0.11);
+    --line-strong: rgba(36,26,18,0.22);
+    --max: 1180px;
+    --ease: cubic-bezier(.22,.8,.32,1);
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  @media (prefers-reduced-motion: reduce){
+    html{scroll-behavior:auto;}
+    *{animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; scroll-behavior:auto !important;}
+  }
+  ::selection{ background: var(--brown); color:#fff; }
+  body{
+    margin:0; background: var(--bg); color: var(--ink);
+    font-family:'Space Grotesk', sans-serif; -webkit-font-smoothing:antialiased; overflow-x:hidden;
+  }
+  a{ color:inherit; text-decoration:none; }
+  .mono{ font-family:'IBM Plex Mono', monospace; }
+  .serif{ font-family:'Source Serif 4', serif; }
+  .wrap{ max-width: var(--max); margin:0 auto; padding: 0 clamp(1.5rem, 4vw, 3.5rem); }
+  a:focus-visible, button:focus-visible{ outline:2px solid var(--brown); outline-offset:4px; }
+  img{ max-width:100%; display:block; }
+
+  /* ---------------- utility bar ---------------- */
+  .util-bar{
+    background: var(--brown-dark); color:#F2E7D8;
+    font-family:'IBM Plex Mono', monospace; font-size:0.72rem;
+    text-align:center; padding: 0.5rem 1rem; letter-spacing:0.02em;
+  }
+  .util-bar a{ color:#fff; border-bottom:1px solid rgba(255,255,255,0.4); }
+
+  /* ---------------- nav ---------------- */
+  header.site-nav{
+    position:sticky; top:0; z-index:200; background: rgba(251,246,239,0.9);
+    backdrop-filter: blur(10px); border-bottom:1px solid var(--line);
+  }
+  .nav-inner{ display:flex; align-items:center; justify-content:space-between; padding: 1.1rem 0; }
+  .nav-mark{ font-family:'IBM Plex Mono', monospace; font-size:0.9rem; display:flex; align-items:center; gap:0.5rem; }
+  .nav-mark .dot{ width:6px; height:6px; border-radius:50%; background: var(--brown); }
+  nav.nav-links{ display:flex; gap:2rem; }
+  nav.nav-links a{
+    font-family:'IBM Plex Mono', monospace; font-size:0.74rem; letter-spacing:0.02em; color: var(--ink-dim);
+    position:relative; padding-bottom:3px; transition: color .2s ease;
+  }
+  nav.nav-links a::after{ content:""; position:absolute; left:0; right:100%; bottom:0; height:1px; background: var(--brown); transition:right .3s var(--ease); }
+  nav.nav-links a:hover, nav.nav-links a.active{ color: var(--ink); }
+  nav.nav-links a.active::after{ right:0; }
+  .nav-cta{ display:flex; align-items:center; gap:1.4rem; }
+  .nav-status{ display:flex; align-items:center; gap:0.5rem; font-family:'IBM Plex Mono', monospace; font-size:0.7rem; color: var(--ink-faint); }
+  .nav-status .pulse{ width:6px; height:6px; border-radius:50%; background:#4F8A5A; animation: pulse-op 2.4s ease-in-out infinite; }
+  @keyframes pulse-op{ 0%,100%{opacity:1;} 50%{opacity:.35;} }
+  .btn-line{ font-family:'IBM Plex Mono', monospace; font-size:0.75rem; border:1px solid var(--line-strong); padding:0.55rem 1rem; transition: border-color .2s ease, background .2s ease; }
+  .btn-line:hover{ border-color: var(--brown); background: var(--brown-soft); }
+  .burger{ display:none; }
+  @media (max-width:900px){
+    nav.nav-links, .nav-status{ display:none; }
+    .burger{ display:flex; flex-direction:column; gap:5px; background:none; border:none; cursor:pointer; padding:0.4rem; }
+    .burger span{ width:22px; height:1.5px; background: var(--ink); display:block; }
+  }
+  .mobile-menu{
+    position:fixed; inset:0; background: var(--bg); z-index:300;
+    display:flex; flex-direction:column; justify-content:center; padding: 2rem clamp(1.5rem,6vw,3rem);
+    transform: translateY(-100%); transition: transform .45s var(--ease);
+  }
+  .mobile-menu.open{ transform: translateY(0); }
+  .mobile-menu a{ font-size:2rem; font-weight:600; padding:0.5rem 0; border-bottom:1px solid var(--line); }
+  .mobile-close{ position:absolute; top:1.4rem; right:1.5rem; background:none; border:none; color:var(--ink); font-size:1.8rem; cursor:pointer; }
+  @media (min-width:901px){ .mobile-menu{ display:none; } }
+
+  /* ---------------- hero ---------------- */
+  .hero{ position:relative; padding: clamp(3.5rem,8vw,6rem) 0 0; overflow:hidden; }
+  .hero-bg{
+    position:absolute; inset:0; z-index:-1;
+    background: radial-gradient(900px 500px at 82% -10%, var(--surface-warm), transparent 60%);
+  }
+  .hero-schema{ position:absolute; right:-6%; top:6%; width:min(40vw,520px); opacity:0.4; pointer-events:none; z-index:-1; }
+  @media (max-width:900px){ .hero-schema{ display:none; } }
+  .eyebrow{ font-family:'IBM Plex Mono', monospace; font-size:0.78rem; color: var(--brown); letter-spacing:0.05em; display:flex; align-items:center; gap:0.7rem; margin:0 0 1.4rem; }
+  .eyebrow .rule{ width:34px; height:1px; background: var(--brown); display:inline-block; }
+  h1.hero-title{
+    font-family:'Source Serif 4', serif; font-weight:700; font-style:normal;
+    font-size: clamp(2.6rem, 7vw, 5.4rem); line-height:1.02; letter-spacing:-0.01em; margin:0; max-width:16ch;
+  }
+  .hero-sub{ margin: 1.6rem 0 0; font-size: clamp(1.05rem,1.6vw,1.25rem); color: var(--ink-dim); max-width:52ch; line-height:1.6; }
+  .hero-sub strong{ color: var(--ink); font-weight:600; }
+  .hero-actions{ display:flex; gap:1.2rem; margin-top:2.2rem; flex-wrap:wrap; }
+  .btn-primary{
+    font-family:'IBM Plex Mono', monospace; font-size:0.82rem; background: var(--brown); color:#fff;
+    padding:0.9rem 1.6rem; display:inline-flex; align-items:center; gap:0.6rem;
+    transition: transform .25s var(--ease), box-shadow .25s ease;
+  }
+  .btn-primary:hover{ transform:translateY(-2px); box-shadow:0 12px 26px -10px rgba(138,62,30,0.45); }
+  .btn-secondary{
+    font-family:'IBM Plex Mono', monospace; font-size:0.82rem; border:1px solid var(--line-strong);
+    padding:0.9rem 1.6rem; transition: border-color .2s ease, background .2s ease;
+  }
+  .btn-secondary:hover{ border-color: var(--brown); background: var(--brown-soft); }
+
+  /* highlight ticker */
+  .ticker{ display:grid; grid-template-columns:repeat(3,1fr); gap:1.1rem; margin: clamp(3rem,6vw,4.5rem) 0 clamp(3.5rem,7vw,5.5rem); }
+  @media (max-width:820px){ .ticker{ grid-template-columns:1fr; } }
+  .tick-card{ background: var(--surface); border:1px solid var(--line); border-left:3px solid var(--brown); padding:1.3rem 1.4rem; transition: transform .25s var(--ease), box-shadow .25s ease; }
+  .tick-card:hover{ transform: translateY(-3px); box-shadow: 0 14px 30px -18px rgba(36,26,18,0.25); }
+  .tick-card .tag{ font-family:'IBM Plex Mono', monospace; font-size:0.68rem; color: var(--brown); letter-spacing:0.03em; }
+  .tick-card p{ margin:0.6rem 0 0; font-size:0.94rem; color: var(--ink); line-height:1.5; }
+
+  /* ---------------- tree timeline ---------------- */
+  .tree-wrap{
+    position:relative; width:100%; aspect-ratio: 4 / 5; max-width:720px; margin:0 auto 2.6rem;
+  }
+  @media (max-width:700px){ .tree-wrap{ aspect-ratio: 3 / 4.6; } }
+  .tree-soil-svg, .tree-grow-wrap, .tree-svg{ position:absolute; inset:0; width:100%; height:100%; }
+  .tree-soil-svg{ z-index:1; }
+  .tree-grow-wrap{
+    z-index:2;
+    clip-path: inset(100% 0 0 0);
+    transition: clip-path 3.1s cubic-bezier(.22,1,.36,1);
+  }
+  .tree-wrap.grown .tree-grow-wrap{ clip-path: inset(0% 0 0 0); }
+  .trunk-shape{ filter: drop-shadow(0 2px 2px rgba(36,26,18,0.08)); }
+  .branch-path{ fill:none; stroke: var(--brown); stroke-width:6; stroke-linecap:round; opacity:0.85; }
+  .bud-glow{ fill: var(--brown-soft); }
+  .bud{ fill: var(--brown); stroke: var(--surface); stroke-width:2; transition: r .2s ease, fill .2s ease; }
+  .bud-present{ fill: var(--brown-dark); }
+
+  .tl-leaf{
+    position:absolute; z-index:3; transform:translate(-50%,-50%);
+    background: var(--surface); border:1px solid var(--line); cursor:pointer;
+    padding: 0.4rem 0.65rem; display:flex; flex-direction:column; gap:0.15rem;
+    max-width:150px; text-align:left;
+    opacity:0; pointer-events:none;
+    transition: opacity .6s ease, transform .6s var(--ease), border-color .2s ease, box-shadow .2s ease;
+  }
+  .tree-wrap.grown .tl-leaf{ opacity:1; pointer-events:auto; }
+  .tl-leaf.side-right{ transform: translate(6px,-50%); text-align:left; }
+  .tl-leaf.side-left{ transform: translate(calc(-100% - 6px),-50%); text-align:right; align-items:flex-end; }
+  .tree-wrap.grown .tl-leaf.side-right{ transform: translate(10px,-50%); }
+  .tree-wrap.grown .tl-leaf.side-left{ transform: translate(calc(-100% - 10px),-50%); }
+  .tl-leaf .leaf-date{ font-family:'IBM Plex Mono', monospace; font-size:0.66rem; color: var(--brown); white-space:nowrap; }
+  .tl-leaf .leaf-title{ font-size:0.78rem; color: var(--ink); line-height:1.25; }
+  .tl-leaf:hover{ border-color: var(--brown); box-shadow: 0 8px 20px -12px rgba(36,26,18,0.3); }
+  .tl-leaf.active{ border-color: var(--brown); background: var(--brown-soft); }
+  .tl-leaf.active .leaf-title{ color: var(--brown-dark); }
+  @media (max-width:520px){ .tl-leaf{ max-width:118px; padding:0.32rem 0.5rem; } .tl-leaf .leaf-title{ font-size:0.7rem; } }
+
+  .tl-panel{
+    border:1px solid var(--line); background: var(--surface); padding: 1.8rem 2rem;
+    display:grid; grid-template-columns: 130px 1fr; grid-template-rows: auto auto; gap:0.3rem 1.6rem;
+  }
+  @media (max-width:640px){ .tl-panel{ grid-template-columns:1fr; grid-template-rows:auto auto auto; gap:0.5rem; } }
+  .tl-panel > .tp-date{ grid-column:1; grid-row:1; font-family:'IBM Plex Mono', monospace; font-size:0.78rem; color: var(--brown); align-self:start; white-space:nowrap; }
+  .tl-panel > .tp-tag{ grid-column:1; grid-row:2; align-self:start; font-family:'IBM Plex Mono', monospace; font-size:0.66rem; color: var(--ink-faint); border:1px solid var(--line); padding:0.25rem 0.5rem; display:inline-block; white-space:nowrap; }
+  @media (max-width:640px){ .tl-panel > .tp-date, .tl-panel > .tp-tag{ grid-column:1; } .tl-panel > .tp-tag{ grid-row:2; } }
+  .tl-panel > .tl-panel-body{ grid-column:2; grid-row: 1 / 3; }
+  @media (max-width:640px){ .tl-panel > .tl-panel-body{ grid-column:1; grid-row:3; } }
+  .tl-panel-body h3{ font-family:'Source Serif 4', serif; font-size:1.25rem; margin:0 0 0.35rem; line-height:1.35; }
+  .tl-panel-body .tp-org{ color: var(--ink-faint); font-size:0.84rem; margin:0 0 0.8rem; }
+  .tl-panel-body p, .tl-panel-body ul{ color: var(--ink-dim); font-size:0.94rem; line-height:1.6; margin:0; }
+  .tl-panel-body ul{ padding-left:1.1rem; }
+  .tl-panel-body li{ margin-bottom:0.35rem; }
+  .tl-panel-body .tp-extra{ margin-top:0.8rem; font-family:'IBM Plex Mono', monospace; font-size:0.72rem; color: var(--ink-faint); }
+
+  section{ position:relative; padding: clamp(4.5rem,9vw,7rem) 0; }
+  .sec-head{ display:flex; align-items:baseline; gap:1.2rem; margin-bottom: clamp(2.2rem,5vw,3.2rem); }
+  .sec-index{ font-family:'IBM Plex Mono', monospace; color: var(--brown); font-size:0.85rem; }
+  .sec-title{ font-family:'Source Serif 4', serif; font-size: clamp(1.7rem,3vw,2.4rem); font-weight:700; margin:0; }
+  .sec-rule{ flex:1; height:1px; background: var(--line); }
+
+  .reveal{ opacity:0; transform: translateY(24px); transition: opacity .8s var(--ease), transform .8s var(--ease); }
+  .reveal.is-visible{ opacity:1; transform:none; }
+
+  /* ---------------- featured ---------------- */
+  .featured{ background: var(--surface-warm); border:1px solid var(--line); }
+  .feat-grid{ display:grid; grid-template-columns: 120px 1fr; }
+  @media (max-width:700px){ .feat-grid{ grid-template-columns:1fr; } }
+  .feat-index{ display:flex; align-items:flex-start; justify-content:center; padding: 2.4rem 0; font-family:'IBM Plex Mono', monospace; font-size:0.85rem; color: var(--brown); border-right:1px solid var(--line); }
+  @media (max-width:700px){ .feat-index{ border-right:none; border-bottom:1px solid var(--line); padding:1.2rem 1.6rem; justify-content:flex-start; } }
+  .feat-body{ padding: 2.4rem 2.6rem; }
+  .feat-body .tag{ font-family:'IBM Plex Mono', monospace; font-size:0.72rem; color: var(--brown); letter-spacing:0.03em; }
+  .feat-body h3{ font-family:'Source Serif 4', serif; font-size: clamp(1.4rem,2.4vw,1.9rem); margin: 0.7rem 0 0.8rem; line-height:1.3; }
+  .feat-body p{ color: var(--ink-dim); font-size:1rem; line-height:1.65; max-width:60ch; margin:0 0 1.2rem; }
+  .feat-link{ font-family:'IBM Plex Mono', monospace; font-size:0.82rem; color: var(--brown); border-bottom:1px solid var(--brown); padding-bottom:2px; }
+
+  /* ---------------- journey / stats ---------------- */
+  .journey-grid{ display:grid; grid-template-columns: 1fr 1fr; gap: 3.5rem; align-items:start; }
+  @media (max-width:860px){ .journey-grid{ grid-template-columns:1fr; } }
+  .journey-copy p{ font-family:'Source Serif 4', serif; font-size: clamp(1.25rem,2.2vw,1.65rem); line-height:1.55; color: var(--ink); margin:0 0 1.3rem; }
+  .journey-copy p:last-child{ margin-bottom:0; }
+  .stat-grid{ display:grid; grid-template-columns:1fr 1fr; border-top:1px solid var(--line); border-left:1px solid var(--line); }
+  .stat-cell{ border-right:1px solid var(--line); border-bottom:1px solid var(--line); padding:1.6rem 1.6rem; }
+  .stat-cell .sv{ font-family:'IBM Plex Mono', monospace; font-size: clamp(1.7rem,3vw,2.3rem); color: var(--brown); font-weight:500; }
+  .stat-cell .sl{ margin-top:0.4rem; font-family:'IBM Plex Mono', monospace; font-size:0.7rem; color: var(--ink-faint); letter-spacing:0.02em; }
+
+  /* ---------------- quote ---------------- */
+  .quote-section{ text-align:center; }
+  .quote-mark{ font-family:'Source Serif 4', serif; font-size:3rem; color: var(--brown); line-height:1; }
+  blockquote{ margin: 0 auto; max-width: 46ch; font-family:'Source Serif 4', serif; font-style:italic; font-weight:500; font-size: clamp(1.4rem,3vw,2rem); line-height:1.5; color: var(--ink); }
+  .quote-attr{ margin-top:1.6rem; font-family:'IBM Plex Mono', monospace; font-size:0.78rem; color: var(--ink-faint); }
+
+  /* ---------------- publications / research cards ---------------- */
+  .card-grid{ display:grid; grid-template-columns: repeat(2,1fr); gap:1.5rem; }
+  @media (max-width:780px){ .card-grid{ grid-template-columns:1fr; } }
+  .r-card{ background: var(--surface); border:1px solid var(--line); padding:1.8rem; transition: transform .25s var(--ease), box-shadow .25s ease; }
+  .r-card:hover{ transform: translateY(-4px); box-shadow: 0 16px 32px -20px rgba(36,26,18,0.3); }
+  .r-card .tag{ font-family:'IBM Plex Mono', monospace; font-size:0.7rem; color: var(--brown); display:block; margin-bottom:0.8rem; }
+  .r-card h3{ font-family:'Source Serif 4', serif; font-size:1.2rem; margin:0 0 0.4rem; line-height:1.35; }
+  .r-card .org{ color: var(--ink-faint); font-size:0.84rem; margin:0 0 1rem; }
+  .r-card p{ color: var(--ink-dim); font-size:0.94rem; line-height:1.6; margin:0 0 1.1rem; }
+  .r-card .tools, .r-card .doi{ font-family:'IBM Plex Mono', monospace; font-size:0.72rem; color: var(--ink-faint); border-top:1px solid var(--line); padding-top:0.9rem; }
+  .read-link{ display:inline-flex; align-items:center; gap:0.4rem; margin-top:0.9rem; font-family:'IBM Plex Mono', monospace; font-size:0.78rem; color: var(--brown); }
+
+  /* ---------------- timeline ---------------- */
+  .timeline{ position:relative; }
+  .timeline::before{ content:""; position:absolute; left:7px; top:8px; bottom:8px; width:1px; background: var(--line-strong); }
+  .tl-item{ position:relative; padding:0 0 2.8rem 3rem; }
+  .tl-item:last-child{ padding-bottom:0; }
+  .tl-item::before{ content:""; position:absolute; left:0; top:6px; width:15px; height:15px; border-radius:50%; background: var(--bg); border:2px solid var(--line-strong); }
+  .tl-item.current::before{ border-color: var(--brown); box-shadow:0 0 0 4px var(--brown-soft); }
+  .tl-grid{ display:grid; grid-template-columns:200px 1fr; gap:1.6rem; }
+  @media (max-width:700px){ .tl-grid{ grid-template-columns:1fr; } }
+  .tl-date{ font-family:'IBM Plex Mono', monospace; font-size:0.78rem; color: var(--brown); }
+  .tl-item h3{ font-family:'Source Serif 4', serif; font-size:1.25rem; margin:0.2rem 0 0.25rem; }
+  .tl-org{ color: var(--ink-dim); font-size:0.92rem; margin:0 0 0.9rem; }
+  .tl-item ul{ margin:0; padding-left:1.15rem; color: var(--ink-dim); font-size:0.96rem; line-height:1.65; }
+  .tl-item li{ margin-bottom:0.4rem; }
+
+  /* ---------------- education ---------------- */
+  .edu-row{ display:grid; grid-template-columns:2.2fr 2.6fr 1fr 1fr; gap:1.2rem; align-items:center; padding:1.4rem 0; border-top:1px solid var(--line); transition: background .25s ease; }
+  .edu-row:hover{ background: rgba(36,26,18,0.025); }
+  .edu-row:last-child{ border-bottom:1px solid var(--line); }
+  @media (max-width:780px){ .edu-row{ grid-template-columns:1fr 1fr; row-gap:0.3rem; } .edu-row .deg{ grid-column:1/-1; } }
+  .edu-row .deg{ font-weight:600; font-size:1.02rem; }
+  .edu-row .inst{ color: var(--ink-dim); font-size:0.92rem; }
+  .edu-row .num{ font-family:'IBM Plex Mono', monospace; font-size:0.86rem; }
+  .edu-row .yr{ font-family:'IBM Plex Mono', monospace; font-size:0.86rem; color: var(--ink-faint); text-align:right; }
+  @media (max-width:780px){ .edu-row .yr{ text-align:left; } }
+
+  /* ---------------- topics / skills ---------------- */
+  .topics-grid{ display:grid; grid-template-columns: repeat(3,1fr); gap:2.4rem; }
+  @media (max-width:780px){ .topics-grid{ grid-template-columns:1fr; } }
+  .topic-col h3{ font-family:'IBM Plex Mono', monospace; font-size:0.74rem; color: var(--brown); letter-spacing:0.03em; margin:0 0 1.1rem; }
+  .chip-row{ display:flex; flex-wrap:wrap; gap:0.55rem; }
+  .chip{ font-family:'IBM Plex Mono', monospace; font-size:0.78rem; color: var(--ink-dim); border:1px solid var(--line); padding:0.45rem 0.85rem; transition: border-color .2s ease, color .2s ease, background .2s ease; }
+  .chip:hover{ border-color: var(--brown); color: var(--ink); background: var(--brown-soft); }
+
+  /* ---------------- media / channels ---------------- */
+  .channel-grid{ display:grid; grid-template-columns: repeat(3,1fr); gap:1.5rem; }
+  @media (max-width:900px){ .channel-grid{ grid-template-columns:1fr; } }
+  .channel-card{ background: var(--surface); border:1px solid var(--line); padding:1.8rem; display:flex; flex-direction:column; gap:1rem; transition: transform .25s var(--ease), box-shadow .25s ease; }
+  .channel-card:hover{ transform: translateY(-4px); box-shadow: 0 16px 32px -20px rgba(36,26,18,0.3); }
+  .channel-top{ display:flex; align-items:center; gap:0.9rem; }
+  .channel-mark{ width:44px; height:44px; border-radius:50%; background: var(--surface-warm); border:1px solid var(--line); display:flex; align-items:center; justify-content:center; font-family:'Source Serif 4', serif; font-weight:700; color: var(--brown); flex-shrink:0; }
+  .channel-card h3{ font-family:'Source Serif 4', serif; font-size:1.15rem; margin:0; line-height:1.3; }
+  .channel-desc{ color: var(--ink-dim); font-size:0.92rem; line-height:1.6; margin:0; }
+  .channel-stat{ font-family:'IBM Plex Mono', monospace; font-size:0.72rem; color: var(--ink-faint); }
+  .channel-platforms{ display:flex; flex-wrap:wrap; gap:0.5rem; margin-top:auto; padding-top:0.4rem; border-top:1px solid var(--line); }
+  .platform-link{ font-family:'IBM Plex Mono', monospace; font-size:0.72rem; color: var(--ink-dim); border:1px solid var(--line); padding:0.4rem 0.7rem; transition: border-color .2s ease, color .2s ease, background .2s ease; }
+  .platform-link:hover{ border-color: var(--brown); color: var(--ink); background: var(--brown-soft); }
+  .placeholder-note{ font-family:'IBM Plex Mono', monospace; font-size:0.68rem; color: var(--ink-faint); font-style:italic; }
+  .channel-full-header{
+    display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.6rem;
+    padding-bottom:0.9rem; margin-bottom:0.9rem; border-bottom:1px solid var(--line);
+  }
+  .channel-full-yt{ font-family:'IBM Plex Mono', monospace; font-size:0.78rem; color: var(--brown); border-bottom:1px solid var(--brown); padding-bottom:1px; }
+  .channel-full-count{ font-family:'IBM Plex Mono', monospace; font-size:0.7rem; color: var(--ink-faint); }
+  .channel-about{
+    white-space:pre-line; color: var(--ink-dim); font-size:0.9rem; line-height:1.65;
+    margin: 0 0 1.4rem; padding-bottom:1.2rem; border-bottom:1px solid var(--line);
+  }
+  .creations-sub{
+    font-family:'IBM Plex Mono', monospace; font-size:0.74rem; color: var(--brown); letter-spacing:0.04em;
+    margin: 0 0 1.2rem; padding-top:1.8rem; border-top:1px solid var(--line);
+  }
+  .creations-sub:first-of-type{ padding-top:0; border-top:none; }
+
+  /* ---------------- channel content: playlists / videos ---------------- */
+  .watch-toggle{
+    font-family:'IBM Plex Mono', monospace; font-size:0.76rem; color: var(--brown);
+    background:none; border:1px solid var(--line-strong); padding:0.55rem 0.9rem; cursor:pointer;
+    display:inline-flex; align-items:center; gap:0.5rem; align-self:flex-start;
+    transition: border-color .2s ease, background .2s ease;
+  }
+  .watch-toggle:hover{ border-color: var(--brown); background: var(--brown-soft); }
+  .watch-toggle .chev{ transition: transform .25s var(--ease); }
+  .watch-toggle[aria-expanded="true"] .chev{ transform: rotate(180deg); }
+  .channel-content{ margin-top:0.4rem; }
+  .channel-content[hidden]{ display:none; }
+  .playlist{ border-top:1px solid var(--line); }
+  .playlist:last-child{ border-bottom:1px solid var(--line); }
+  .playlist > summary{
+    list-style:none; cursor:pointer; padding:0.8rem 0.1rem;
+    display:flex; align-items:center; justify-content:space-between; gap:1rem;
+    font-family:'IBM Plex Mono', monospace; font-size:0.82rem; color: var(--ink);
+  }
+  .playlist > summary::-webkit-details-marker{ display:none; }
+  .playlist > summary .pl-title{ flex:1; }
+  .playlist > summary .pl-count{ color: var(--ink-faint); font-size:0.72rem; white-space:nowrap; }
+  .playlist > summary .pl-chev{ color: var(--brown); transition: transform .2s ease; }
+  .playlist[open] > summary .pl-chev{ transform: rotate(90deg); }
+  .video-list{ list-style:none; margin:0 0 0.9rem; padding:0; display:flex; flex-direction:column; gap:0.6rem; }
+  .video-row{ border:1px solid var(--line); background: var(--bg); }
+  .video-row-main{ display:flex; align-items:center; gap:0.8rem; padding:0.5rem; cursor:pointer; }
+  .video-thumb{ width:88px; height:50px; object-fit:cover; flex-shrink:0; background: var(--surface-warm); }
+  .video-info{ flex:1; min-width:0; }
+  .video-info .vt{ font-size:0.86rem; color: var(--ink); line-height:1.35; display:block; }
+  .video-info .vp{ font-family:'IBM Plex Mono', monospace; font-size:0.68rem; color: var(--ink-faint); }
+  .yt-ext-link{
+    font-family:'IBM Plex Mono', monospace; font-size:0.68rem; color: var(--brown);
+    border:1px solid var(--line); padding:0.35rem 0.6rem; white-space:nowrap; flex-shrink:0;
+  }
+  .yt-ext-link:hover{ border-color: var(--brown); background: var(--brown-soft); }
+  .video-player{ display:none; aspect-ratio:16/9; background:#000; }
+  .video-player.open{ display:block; }
+  .video-player iframe{ width:100%; height:100%; border:0; display:block; }
+
+  /* ---------------- books ---------------- */
+  .book-grid{ display:grid; grid-template-columns: repeat(3,1fr); gap:1.5rem; }
+  @media (max-width:900px){ .book-grid{ grid-template-columns:1fr; } }
+  .book-card{ background: var(--surface); border:1px solid var(--line); display:flex; flex-direction:column; transition: transform .25s var(--ease), box-shadow .25s ease; }
+  .book-card:hover{ transform: translateY(-4px); box-shadow: 0 16px 32px -20px rgba(36,26,18,0.3); }
+  .book-cover{ aspect-ratio: 3/4; background: linear-gradient(155deg, var(--surface-warm), var(--bg)); border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:center; padding:1.5rem; text-align:center; }
+  .book-cover span{ font-family:'Source Serif 4', serif; font-style:italic; color: var(--brown); font-size:1rem; }
+  .book-body{ padding:1.5rem; }
+  .book-body .tag{ font-family:'IBM Plex Mono', monospace; font-size:0.68rem; color: var(--brown); }
+  .book-body h3{ font-family:'Source Serif 4', serif; font-size:1.1rem; margin:0.6rem 0 0.5rem; line-height:1.3; }
+  .book-body p{ color: var(--ink-dim); font-size:0.88rem; line-height:1.55; margin:0 0 1rem; }
+  .book-card.upcoming{ border-style:dashed; display:flex; align-items:center; justify-content:center; min-height:280px; }
+  .book-card.upcoming p{ color: var(--ink-faint); font-family:'IBM Plex Mono', monospace; font-size:0.82rem; text-align:center; padding:1.5rem; margin:0; }
+
+  /* ---------------- recognition strip ---------------- */
+  .recognition{ display:grid; grid-template-columns:repeat(3,1fr); border-top:1px solid var(--line); border-left:1px solid var(--line); }
+  @media (max-width:780px){ .recognition{ grid-template-columns:1fr; } }
+  .rec-cell{ padding:1.8rem; border-right:1px solid var(--line); border-bottom:1px solid var(--line); }
+  .rec-cell .tag{ font-family:'IBM Plex Mono', monospace; font-size:0.68rem; color: var(--brown); }
+  .rec-cell h4{ font-family:'Source Serif 4', serif; font-size:1.05rem; margin:0.6rem 0 0.4rem; }
+  .rec-cell p{ font-size:0.86rem; color: var(--ink-dim); line-height:1.55; margin:0; }
+
+  /* ---------------- CTA band ---------------- */
+  .cta-band{ background: var(--brown); color:#fff; text-align:center; padding: clamp(4rem,9vw,6rem) 0; }
+  .cta-band h2{ font-family:'Source Serif 4', serif; font-size: clamp(2rem,5vw,3.2rem); margin:0 0 1.6rem; line-height:1.15; }
+  .cta-band .magnet-btn{ display:inline-flex; align-items:center; gap:0.7rem; font-family:'IBM Plex Mono', monospace; font-size:0.95rem; background:#fff; color: var(--brown-dark); padding:1rem 1.9rem; transition: transform .25s var(--ease); }
+  .cta-band .magnet-btn:hover{ transform: translateY(-2px); }
+
+  /* ---------------- footer ---------------- */
+  footer{ padding: clamp(3.5rem,7vw,5rem) 0 2rem; }
+  .foot-grid{ display:grid; grid-template-columns: 1.3fr 1fr 1fr 1fr; gap:2.2rem; padding-bottom:2.5rem; border-bottom:1px solid var(--line); }
+  @media (max-width:780px){ .foot-grid{ grid-template-columns:1fr 1fr; } }
+  .foot-brand{ font-family:'IBM Plex Mono', monospace; font-size:0.9rem; }
+  .foot-brand p{ margin-top:0.9rem; color: var(--ink-dim); font-size:0.86rem; line-height:1.6; max-width:26ch; }
+  .foot-col h4{ font-family:'IBM Plex Mono', monospace; font-size:0.7rem; color: var(--ink-faint); letter-spacing:0.04em; margin:0 0 0.9rem; }
+  .foot-col a, .foot-col p{ font-size:0.88rem; color: var(--ink-dim); line-height:1.8; display:block; }
+  .foot-col a:hover{ color: var(--brown); }
+  .foot-bottom{ margin-top:1.6rem; display:flex; justify-content:space-between; flex-wrap:wrap; gap:0.8rem; font-family:'IBM Plex Mono', monospace; font-size:0.72rem; color: var(--ink-faint); }
+</style>
 </head>
 <body>
 
@@ -503,8 +867,220 @@
   </div>
 </footer>
 
+<script>
+const CHANNEL_INFO = {"bhavatu": {"name": "Bhavatu Sarvam", "url": "https://www.youtube.com/@bhavatu_sarvam", "about": "Welcome to Bhavatu Sarvam (भवतु सर्वम्)\n\nBhavatu Sarvam is a place where music, inspiration, spirituality, and visual storytelling come together to uplift the heart and calm the mind.\n\nExplore a growing collection of:\n\n🎵 Devotional Bhajans & Mantras\n🕉️ Sanskrit Chants & Sacred Hymns\n🎬 Cinematic Inspirational Stories\n🌅 Silent Motivational Shorts\n🧘 Meditation & Relaxation Music\n🌿 Positive Life Lessons & Mindfulness\n🎼 Peaceful Instrumental Music\n✨ Spiritual Wisdom & Daily Inspiration\n\nEvery video is created to inspire hope, inner peace, courage, and personal growth through meaningful visuals, soothing music, and timeless messages.\n\nSubscribe and become part of a community that celebrates positivity, reflection, and meaningful living.\n\nBhavatu Sarvam — May All Be Well.", "playlists": [{"title": "✨ Let Your Heart Chant Shri Ram | Divine Meditation Music", "videos": [{"id": "rdvO3RW2l7w", "title": "Continuous Ram Ram Japa Chant for 1 Hour | श्री राम राम जप | Deep Meditation • Peace • Devotion 🙏"}, {"id": "t-Xoed563pw", "title": "श्री राम जय राम जय जय राम | Divine Ram Naam Sankirtan | Soulful Chant for Meditation & Devotion"}, {"id": "wsrgaiURwoc", "title": "Close Your Eyes & Listen... श्री राम जय राम जय जय राम | Most Peaceful Ram Bhajan Ever"}, {"id": "diLMINLC9Zk", "title": "श्री राम जय राम जय जय राम | Ram Bhajan | Calm Mind • Pure Heart • Positive Energy"}, {"id": "jF70Dri_fRM", "title": "👑 Ram Naam: The Sound That Never Fades | Divine Chant 🌟 Infinite Ram | Sacred Chant for the Soul"}, {"id": "7C_NLn0K_lA", "title": "🕉️ Ram Ram Ram Chant | Divine Ram Naam for Meditation, Sleep & Daily Prayer"}, {"id": "li1c3qgN5gA", "title": "🙏 श्री राम राम रामेति | Sacred Ram Naam Mantra from Vishnu Sahasranama | Soulful Devotional Chant"}, {"id": "PXCXjloLRf4", "title": "👑 Shri Ram Ram Rameti | The Eternal Power of Ram Naam | Sacred Chant & Divine Meditation Music"}]}, {"title": "🌌 Shiva Beyond Time | Spiritual Chants & Meditation", "videos": [{"id": "uXfDMDaSGpM", "title": "🕉️ bhavatu_sarvam Presents: Karpur Gauram Karunavtaram - Lo-fi Version - कर्पूरगौरं करुणावतारं |"}, {"id": "VDh4lvhtZpU", "title": "Om Namah Shivaya | Peaceful Shiva Chant | Relaxing LoFi Meditation Music | Continuous Chant"}, {"id": "cmBg4YLmETg", "title": "⚡ HAR HAR MAHADEV ⚡ | Divine Power • Fearless Spirit • Eternal Devotion"}, {"id": "zpicEOq7MZU", "title": "🔱 हर हर महादेव | Echoes of Kailash | The Ultimate Shiva Devotional Anthem |"}, {"id": "uUEjRqPr4Lw", "title": "🔱 HAR HAR MAHADEV | The Ultimate Shiva Anthem | Powerful Devotional Chant to Awaken Your Soul"}, {"id": "10XuC7fECwg", "title": "🕉️ ॐ | The Sound Before Creation | Ancient Meditation Hymn for Deep Peace, Healing & Inner Awakening"}, {"id": "00c5O3BdOF0", "title": "ॐ | Powerful Om Meditation Chant | Relaxing Hymn for Healing, Yoga & Mindfulness"}, {"id": "Yhp99bTkpf4", "title": "Ya Te Rudra Shiva | Ancient Shiva Mantra from Sri Rudram | Divine Vedic Chant for Peace & Protection"}, {"id": "4ri8GlilrC4", "title": "ॐ नमः शिवाय मंत्र | Ancient Shiva Chant to Remove Negative Energy & Bring Inner Peace"}, {"id": "pqpvP-n5V_o", "title": "ॐ नमः शिवाय | Divine Mahadev Chant_Powerful Meditation Music_Relax, Heal & Manifest Positive Energy"}, {"id": "FaLc_Q3VVl0", "title": "🕉️ या ते रुद्र शिवा | Powerful Rudram Mantra | Sacred Shiva Chant for Inner Peace"}, {"id": "3T5dEzklHrY", "title": "या ते रुद्र शिवा तनूरघोराऽपापकाशिनी | Powerful Shiva Mantra for Peace, Protection & Divine Blessings"}, {"id": "lmgf6AwmICM", "title": "📿 Shri Rudram Mantra | या ते रुद्र शिवा | Timeless Vedic Hymn to Lord Shiva"}]}, {"title": "🪔 Maha Mantra Meditation | Hare Krishna Hare Rama Chant", "videos": [{"id": "hk7QGsKlfv0", "title": "Hare Krishna Hare Rama Mahamantra | Divine Chant for Meditation, Peace & Spiritual Bliss"}, {"id": "zT7hYAqPDkA", "title": "Hare Krishna Hare Rama Mahamantra | Divine Chant for Peace, Meditation & Positive Energy"}, {"id": "WLHrGzh1Vkk", "title": "🕉️ Hare Krishna Hare Rama Maha Mantra | Peaceful Chant for Meditation, Devotion & Inner Peace"}, {"id": "AVjiifunbdE", "title": "🦚 Hare Krishna Hare Rama Maha Mantra | Relaxing Devotional Chant, Kirtan & Spiritual Music"}, {"id": "BfcLq82U3Hk", "title": "Hare Krishna Hare Rama Maha Mantra | Divine Chant for Peace, Meditation & Spiritual Bliss"}, {"id": "eM2CMK7qke8", "title": "Relaxing Hare Krishna Hare Rama Mantra Meditation"}, {"id": "4pYqfLY5ENQ", "title": "✨ Hare Krishna Hare Rama | Sacred Maha Mantra for Peace, Love & Spiritual Awakening"}, {"id": "Y9ki715kS38", "title": "🌸 Divine Hare Krishna Hare Rama Chant | Soulful Kirtan for Prayer & Meditation"}]}, {"title": "🦚 Divine Krishna Bhajans | Soulful Chants for Peace & Devotion", "videos": [{"id": "kd3Maud8SfI", "title": "Jaya Radha Madhava | Soulful Krishna Bhajan | Hare Krishna Mahamantra | Peaceful Devotional Chant"}, {"id": "KsbAYPxPqbo", "title": "✨ Krishna Mantra for Positive Energy | Om Krishnaya Vasudevaya Haraye Paramatmane | Divine Chant"}]}, {"title": "📖 Ramcharitmanas | Divine Chaupai, Doha & Bhajans | Soulful Devotional Collection", "videos": [{"id": "99uSpBfCrtM", "title": "🕉️ Ramcharitmanas Chaupai | पाई न केहिं गति पतित पावन | Shri Ram Bhajan for Peace & Inner Bliss"}]}, {"title": "When the Divine Speaks... everything changes. ✨ #Shorts", "videos": [{"id": "TUk5K0NvTqM", "title": "\"Knowledge is a light, but a Guru is the spark.\" | 🪔Bhavatu Sarvam | भवतु सर्वम्"}, {"id": "2fAgkng_2Ac", "title": "श्री राम राम जप | Deep Meditation • Peace • Devotion 🙏 Bhavatu Sarvam | भवतु सर्वम्"}, {"id": "PLYSzEgl_WY", "title": "#Mahadev #LordShiva #ShivMantra #OmNamahShivaya #Rudra #Meditation #Spirituality #Devotional #Peace"}, {"id": "I5TXYEq_KDM", "title": "#Mahadev #LordShiva #HarHarMahadev #Rudra #Meditation #Spirituality #Bhakti #Devotional #Peace"}]}, {"title": "🎬 Silent Wisdom #shorts", "videos": [{"id": "7KPLOp_7wC8", "title": "Monk Meditating in the Mountains 🏔️ | Find Inner Peace | Cinematic Inspirational Short"}, {"id": "k6S4I5w2jDk", "title": "A Single Candle in the Darkness 🕯️ | Even One Light Is Enough | Cinematic Inspirational Short"}, {"id": "uqOnJbV6T7o", "title": "The Empty Path 🚶 | Follow Your Own Journey | Cinematic Inspirational Short"}, {"id": "lXe70CrXyXE", "title": "The Sculptor 🗿 | Every Challenge Shapes Greatness | Cinematic Inspirational Short"}, {"id": "PXa4Knghh_k", "title": "The Sculptor 🗿 | Every Challenge Shapes Greatness | Cinematic Inspirational Short"}, {"id": "FQTxTC1AJRc", "title": "The Floating Feather 🪶 | Freedom Begins When You Let Go | Cinematic Inspirational Short"}, {"id": "HiwFILiM6NI", "title": "The Unfinished Bridge 🌉 | Every Great Journey Begins with One Step | Cinematic Inspirational Short"}, {"id": "yZIsEQpmFPs", "title": "A Single Candle in the Darkness 🕯️ | Even One Light Is Enough | Cinematic Inspirational Short"}, {"id": "s8URIqwgpRI", "title": "Monk Meditating in the Mountains 🏔️ | Find Inner Peace | Cinematic Inspirational Short"}, {"id": "NNSCNi6B4IA", "title": "The Empty Path 🚶 | Follow Your Own Journey #CinematicShorts #InspirationalStory #PositiveMindset"}]}, {"title": "हनुमद्भक्ति संग्रह (Hanumad Bhakti Saṅgraha)", "videos": [{"id": "9QYdAfVEAms", "title": "Experience the boundless grace of Lord Shri Ram and Lord Hanuman through these sacred chants"}, {"id": "FTLtrRos6YE", "title": "Immerse yourself in the eternal grace of Lord Shri Ram and His devoted messenger, Lord Hanuman"}, {"id": "nwFO-NN8awM", "title": "Hanuman Dwadash Naam Stotram | हनुमान द्वादश नाम स्तोत्र | Powerful Hanuman Mantra | Daily Chant"}]}, {"title": "Wisdom of Lord Krishna 🦚 | Divine Life Lessons #shorts", "videos": [{"id": "TzZPu5j4yvU", "title": "🌾 श्रीकृष्ण और अधीर किसान | धैर्य का सबसे बड़ा फल | Ghibli Inspired Krishna Story | Life Lesson ✨"}, {"id": "dI0c_ek6vws", "title": "🌿 श्रीकृष्ण और दूध बेचने वाली वृद्धा | ईमानदारी का सबसे बड़ा धन | Ghibli Inspired Krishna Story ✨"}, {"id": "D-2c8t4sxiA", "title": "Lord Krishna's Lesson from the River 🌊 | Never Lose Your Purpose | Inspirational Short"}, {"id": "981BOy7Y2OU", "title": "Lord Krishna's Timeless Lesson 🌅 | Rise Like the Sun | Inspirational Short"}, {"id": "s4VKCxU1JR4", "title": "Shri Krishna and the Butterfly 🦋 | Struggle Gives You Wings | Inspirational Short #lifelesson #peace"}, {"id": "nwvhwNWU678", "title": "Shri Krishna and the Seed 🌱 | Greatness Grows in Silence | Inspirational Short"}, {"id": "nshXsWBSVLM", "title": "Shri Krishna and the River 🌊 | Change the Path, Not the Dream | Inspirational Short"}, {"id": "sZFxxxAzb4Y", "title": "Shri Krishna and the Tree 🌳 | The Strength of Humility | Inspirational Short"}, {"id": "aP6wXFXo04k", "title": "Shri Krishna and the Stone 🗿 | Every Challenge Reveals Greatness | Inspirational Short"}, {"id": "RGIvOO2aTCg", "title": "Shri Krishna and the Sunrise 🌅 | Every Night Ends with Hope | Inspirational Short"}, {"id": "goDD_gQmpRE", "title": "Shri Krishna and the Feather | Let Go to Rise Higher | Inspirational Short"}, {"id": "_3PpOHVZX1Q", "title": "Shri Krishna Lights a Lamp 🕯️ | One Light Can Defeat Darkness | Inspirational Short #cinematicshorts"}, {"id": "Xp1AkHzBQjo", "title": "Baby Krishna Shares His Laddoo 🍬 | Kindness Always Grows | Heartwarming Short"}, {"id": "O1XkE0LsYO8", "title": "Shri Krishna and the Mirror | Discover Your True Self | Inspirational Short"}, {"id": "MP5FAIl0Cxg", "title": "The Potter Asked Krishna Why Clay Must Break... 🏺✨ | #Shorts"}, {"id": "tqDMWQITquU", "title": "The Warrior Asked Krishna How to Defeat Fear... ⚔️✨ | #Shorts"}, {"id": "05IhiMUZ2AM", "title": "The Archer Asked Krishna the Secret of Perfect Focus... 🏹 | #Shorts"}, {"id": "_R9006EfwuQ", "title": "A Sleepless Man Asked Krishna for Peace... 🌙 | #Shorts"}, {"id": "fTqWR9_l48Q", "title": "The Boatman Feared the Waves... Krishna's Answer Changed His Life 🌊 | #Shorts"}, {"id": "eKN-j-Ct0C8", "title": "The Boatman Feared the Waves... Krishna's Answer Changed His Life 🌊 | #Shorts"}, {"id": "fPEhHZHE6tE", "title": "A Child Asked Krishna Where God Lives... His Answer Was Beautiful 💙 | #Shorts"}, {"id": "E7I-xFmRxb8", "title": "The Gardener Asked Krishna About Growth... 🌱 | #Shorts"}, {"id": "k0H1v6IzrTE", "title": "The Farmer Asked Krishna One Question... His Answer Changed Everything 🌾✨ | #Shorts"}, {"id": "Zb6s5p-VFsg", "title": "❤️ \"भगवान प्रेम के भूखे हैं।\""}, {"id": "gnfBNBXWj3o", "title": "माखन नहीं... प्रेम चाहिए भगवान को। ❤️कान्हा को चाहिए बस आपका सच्चा प्यार। 🙏"}]}, {"title": "Wisdom of Lord Hanuman  | Strength, Faith & Devotion #shorts", "videos": [{"id": "D8P4FmAJn-w", "title": "A Child Asked Hanuman Why We Feel Fear... His Answer Was Powerful 🙏 | #Shorts"}, {"id": "6omlmWFiTog", "title": "Hanuman's Greatest Strength Wasn't Power... It Was This 🙏 |"}, {"id": "wf828RM1HlA", "title": "\"भक्ति कभी व्यर्थ नहीं जाती। 🚩\""}, {"id": "Ea88OJJIQ18", "title": "\"भक्ति कभी व्यर्थ नहीं जाती। 🚩\""}]}, {"title": "Wisdom of Lord Rama 🏹 | Dharma & Character #shorts", "videos": [{"id": "k6_DH8GMqSQ", "title": "The Woodcutter Asked Lord Rama Why Life Is So Hard... 🌳 | #Shorts"}, {"id": "Jz7kUuGK1_s", "title": "Why Is the Right Path So Difficult? Lord Rama's Answer Will Stay With You 🏹 | #Shorts"}]}, {"title": "Wisdom of Lord Vishnu 🐚 | Balance, Protection & Peace #shorts", "videos": [{"id": "54DQUUPyH0o", "title": "The Sailor Asked Vishnu How to Defeat Fear... His Answer Was Powerful 🌊✨ | #Shorts"}]}, {"title": "Wisdom of Lord Shiva 🔱 | Inner Peace & Transformation #shorts", "videos": [{"id": "3GzlBTkAgfI", "title": "Shiva's Fire Doesn't Destroy... It Reveals Your True Self 🔥 | #Shorts"}, {"id": "Pf_pr18UhEg", "title": "99% of People Forget This Rule of Mahadev... 🔱 | A Life-Changing Truth #Shorts"}]}, {"title": "Wisdom of Sri Chaitanya Mahaprabhu 🌼 | Timeless Lessons for Life #shorts", "videos": [{"id": "vOWWHhLqcmQ", "title": "Chaitanya Mahaprabhu's Greatest Lesson 🌼 | True Knowledge Brings Humility"}, {"id": "yu1mD1kw_9E", "title": "Sri Chaitanya Mahaprabhu 🌊 | Keep Your Heart Pure | Inspirational Short"}, {"id": "Jv1H5LY8wPA", "title": "Sri Chaitanya Mahaprabhu 🌾 | Faith Never Fails | Inspirational Short"}, {"id": "n52UFkoVpHE", "title": "Sri Chaitanya Mahaprabhu's Lesson 🌸 | Love Never Rejects | Inspirational Short"}, {"id": "o2a0g23trV0", "title": "Sri Chaitanya Mahaprabhu 🪔 | Become a Light for Others | Inspirational Short"}, {"id": "qWe-wU-LkJU", "title": "Sri Chaitanya Mahaprabhu's Lesson 🕊️ | Compassion is True Devotion"}, {"id": "iYufFnxuL3U", "title": "Sri Chaitanya Mahaprabhu 🌧️ | Joy Beyond Every Circumstance | Inspirational Short"}]}, {"title": "Devotional Stories | #shorts #devotional #devotionalshorts", "videos": [{"id": "nwl9cj2kUJo", "title": "🌸 The Most Beautiful Gift of Love | RadhaKrishna Ghibli Inspired ASMR Story | A Timeless Life Lesson"}, {"id": "GR8GVYYSWEY", "title": "The Flower of Kindness | A Ghibli-Inspired ASMR Story Inspired by Śrī Chaitanya Mahaprabhu"}, {"id": "nI-cEykrVS4", "title": "हनुमान जी की मिठाई चोरी 😂 | श्रीराम की मजेदार सीख | Funny Ram Hanuman Story | Ghibli Style Animation"}, {"id": "MFUmNxnsZAI", "title": "श्रीकृष्ण और घमंडी बंदर 🐒🍋 | मजेदार कहानी जो सिखाए विनम्रता | Ghibli Style Animated Story"}]}, {"title": "Leela_Divine Play #shorts", "videos": [{"id": "fa3bcwP0CmM", "title": "👶✨ पूतना वध | बाल श्रीकृष्ण की दिव्य लीला | Krishna Kills Putana | Cinematic 3D Animation #shorts"}, {"id": "fQ1MJip-DTA", "title": "🐍 Krishna Dances on Kaliya | Kaliya Mardan | Divine 3D Animation | Shri Krishna Leela ✨"}, {"id": "6gJfCy7LFqc", "title": "🐒 Hanuman Outsmarts Surasa | The Divine Test Before Lanka | Ramayana 3D Animation ✨"}, {"id": "-5sQCHLaaEQ", "title": "🐒 Jambavan Awakens Hanuman's Divine Power | Hanuman's Epic Leap to Lanka | 3D Animation 🙏"}, {"id": "VciL3yR4olE", "title": "🌌 Krishna Reveals His Vishwaroop to Arjuna | Bhagavad Gita in 3D | Divine Animation"}, {"id": "b9qjsdhslDc", "title": "✨ The Supreme Cosmic Form of Lord Krishna | Divine 3D Animation | Krishnaya Vasudevaya 🙏"}, {"id": "NbJW0r_ZkfE", "title": "Private video"}]}, {"title": "Grace of Lord Jagannath 🙏 | Divine Stories, Wisdom & Life Lessons #shorts #jagannath", "videos": [{"id": "LbulLs0E8iA", "title": "The Empty Bowl 🌾 | Lord Jagannath’s Divine Lesson | Cinematic 3D Story"}, {"id": "GkbEGji6Os0", "title": "The Broken Lamp 🪔 | Lord Jagannath’s Divine Lesson | Cinematic 3D Story"}, {"id": "bF1ror3k04k", "title": "जब दीपक बार-बार बुझा, तब जगन्नाथ जी ने दिया जीवन का सबसे बड़ा सबक 🙏 | Lord Jagannath Story"}, {"id": "kX1_jQPtsfg", "title": "The Empty Plate 🍚 | Lord Jagannath’s Divine Lesson | A Story of Selfless Love 🙏"}, {"id": "5jDiWkUsHZo", "title": "The Broken Flower 🌸 | Lord Jagannath’s Divine Lesson | Ghibli-Inspired Story"}, {"id": "H_SaOy1uHNU", "title": "The Silent Prayer 🌊🙏 | Lord Jagannath’s Divine Life Lesson | Ghibli-Inspired Story"}, {"id": "YpapNOARuXg", "title": "The Lost Coin | Lord Jagannath’s Divine Lesson | Ghibli-Inspired Story"}, {"id": "HF-i5US3xwc", "title": "The Last Flower 🌸 | Lord Jagannath’s Divine Lesson | Cinematic 3D Story"}]}, {"title": "Lord Vitthal’s Divine Grace #shorts #vitthal", "videos": [{"id": "gg7UFIz79iI", "title": "The Last Roti 🙏 | Lord Vitthal’s Divine Lesson | A Story of True Devotion"}, {"id": "qRQ18yRjV8g", "title": "She Gave Her Last Drop of Water to Tulsi… 🙏 | Lord Vitthal’s Grace"}]}, {"title": "🪔 Radha Raman’s Divine Lesson | The Power of True Devotion #shorts #radharaman #krishna", "videos": [{"id": "-8r5KQ8mBbY", "title": "The Unlit Lamp 🪔 | Radha Raman’s Divine Lesson | A Story of True Devotion"}]}, {"title": "🌸 Radha Rani’s Beautiful Lesson | A Divine Story of Love & Kindness #shorts #radha #radharani", "videos": [{"id": "ta-pyWmFYoM", "title": "The Lamp That Survived the Storm 🪔 | Radha Rani’s Divine Grace | #shorts"}, {"id": "f6KSgouAmHM", "title": "The Lost Child and the Mysterious Butterfly 🦋 | Radha Rani’s Grace"}, {"id": "WYtiAGllEIE", "title": "Radha Rani and the Withered Garden 🌺 | A Miraculous Story of Faith & Grace"}, {"id": "lX2x_zS6rgw", "title": "Radha Rani and the Peacock’s Feather 🦚 | A Miraculous Divine Story"}, {"id": "e9rwhzO9ee8", "title": "Radha Rani’s Miracle 🌹 | The Last Rose | A Divine Story of Love & Grace"}, {"id": "sMs3gGUXWWU", "title": "Radha Rani & The Stolen Butter 🧈🌸 | A Funny Divine Story from Barsana #shorts #radha #radharani"}, {"id": "BYpFMxkIwfE", "title": "Radha Rani’s Divine Lesson 🌸 | The Broken Flute | A Story of Letting Go"}, {"id": "mD1Ol_44VtI", "title": "Two Girls. Two Garlands. One Beautiful Lesson 🌸 | Radha Rani"}, {"id": "kxmd77fcwJY", "title": "Radha Rani’s Divine Lesson 🌸 | The Last Flower | A Story of Selfless Love"}, {"id": "oMdu3B1vNog", "title": "The Little Lamp 🪔 | Radha Rani’s Beautiful Lesson About Hope"}]}]}, "storykahani": {"name": "StoryKahani", "url": "https://www.youtube.com/@WatchStoryKahani", "about": "StoryKahani brings you beautifully animated stories filled with comedy, adventure, emotions, talking animals, fantasy, and meaningful life lessons. From funny tales and clever characters to heartwarming moral stories, every video is crafted to entertain viewers of all ages. New animated stories every week!", "playlists": [{"title": "A Story Without Words | Ghibli Inspired Story #shorts #shortvideo", "videos": [{"id": "zZVi2fF0bEI", "title": "The Last Evening Before School 🌅🎒 | A Story Without Words | 90s Childhood | Ghibli-Inspired"}, {"id": "VcEczQ8yMUU", "title": "The Missing Kite 🪁❤️ | A Story Without Words | 90s Village Life | Ghibli-Inspired"}, {"id": "E1G8158nhWM", "title": "The Empty Lunchbox 🍱❤️ | A Story Without Words | 90s Village Life | Ghibli-Inspired"}, {"id": "ePpyXftqrgc", "title": "The Seed Under the Courtyard 🌱❤️ | A Story Without Words | 90s Village Life | Ghibli-Inspired"}, {"id": "uG4G9r5c3Jo", "title": "The Boy Who Saved a Sparrow 🐦❤️ | A Story Without Words | 90s Village Life | Ghibli-Inspired"}, {"id": "OdqSBnA9Wyc", "title": "The Last Mango on the Tree 🥭❤️ | A Story Without Words | 90s Village Life | Ghibli-Inspired"}, {"id": "fPdl54gGCF4", "title": "The Old Tree's Shade 🌳❤️ | A Story Without Words | 90s Village Life | Ghibli-Inspired"}, {"id": "2CnZy93uG44", "title": "Husband's Endless Love ❤️ | Caring for His Sick Wife | Ghibli Village Life"}, {"id": "r5h8eYd5sXg", "title": "Fresh Milk to Golden Butter 🧈 | Traditional Village Butter Making | Ghibli ASMR"}, {"id": "ziWMYtmeUzk", "title": "A Day of Hope ❤️ | Life on the Streets | Ghibli ASMR Story"}, {"id": "yUOMf2qQH3o", "title": "The Greatest Treasure of a Home | Ghibli Inspired ASMR Family Story | Cozy Village Life"}, {"id": "4buMVAqrtW4", "title": "🪔 The Lamp That Never Went Out | GhibliInspired ASMR TempleStory | A SimpleLife of Devotion & Family"}, {"id": "tnvROIzaYf0", "title": "🌙 Moonlight Laundry by the River | Cozy Ghibli Inspired ASMR Story | Relaxing Animation"}, {"id": "YwrRmepvXpk", "title": "🏺 The Mountain Pottery Workshop | Cozy Ghibli Inspired ASMR | Relaxing Artisan Animation"}]}, {"title": "Paper Cut Animation Story #shorts #shortvideo", "videos": [{"id": "jIuADbo7A_I", "title": "The Folded Paper Bird 🕊️ | A Heartwarming Paper Cut Animation Story | Kindness Always Comes Back"}, {"id": "L_utIry4qfo", "title": "The Dancing Paper Leaf 🍂 | A Beautiful Paper Cut Animation About New Beginnings | StoryKahani"}]}, {"title": "Ghibli Dialogues Type Story #shorts #shortvideo", "videos": [{"id": "FPX63FE_UyM", "title": "Rainy Night in the Village 🌧️ | Family Struggles to Stay Safe | Ghibli ASMR"}, {"id": "C85l9o4AxUw", "title": "90s Nights 🌙 | Sleeping Under the Stars After a Power Cut | Ghibli ASMR"}, {"id": "ZDobJ9gyRCo", "title": "The Funniest Vegetable Seller Ever! 😂🍅 | Golu's Hilarious Market Adventure | StoryKahani #shorts"}, {"id": "k02eB7haepc", "title": "🐐 बकरी ने बंदर को भी बेवकूफ बना दिया! 😂 #shorts"}, {"id": "bhAT91CKMwg", "title": "तोते ने चोर को ऐसे फँसाया! 😂 | मज़ेदार हिंदी कॉमेडी कहानी | #shorts #fullepisode"}, {"id": "PIpvlUATeV4", "title": "तोते ने चोर को ऐसे फँसाया! 😂 | मज़ेदार हिंदी कॉमेडी कहानी #clips #shorts #trailer"}]}, {"title": "Tales | Stories Without Words #shorts", "videos": [{"id": "mBHoXHMeZvo", "title": "Ep. 02 — The Little Keeper and the Fallen Nest #shorts"}, {"id": "U0GptOROd8I", "title": "Ep. 01: The Little Keeper and the Forgotten Well 💧 | A Silent Story | StoryKahani"}]}]}};
+</script>
+<script>
+(function(){
+  document.getElementById('footYear').textContent = '© ' + new Date().getFullYear();
 
-<script src="data.js"></script>
-<script src="script.js"></script>
+  var timeEl = document.getElementById('localTime');
+  function updateTime(){
+    try{
+      var fmt = new Intl.DateTimeFormat('en-US', {hour:'2-digit', minute:'2-digit', hour12:false, timeZone:'Asia/Kathmandu'});
+      timeEl.textContent = 'Kathmandu · ' + fmt.format(new Date()) + ' NPT';
+    }catch(e){ timeEl.textContent = 'Kathmandu, Nepal'; }
+  }
+  updateTime(); setInterval(updateTime, 30000);
+
+  var reveals = document.querySelectorAll('.reveal');
+  if ('IntersectionObserver' in window){
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){ if (e.isIntersecting){ e.target.classList.add('is-visible'); io.unobserve(e.target); } });
+    }, {threshold:0.15});
+    reveals.forEach(function(el){ io.observe(el); });
+  } else { reveals.forEach(function(el){ el.classList.add('is-visible'); }); }
+
+  var counters = document.querySelectorAll('[data-count]');
+  var done = false;
+  function runCounters(){
+    if (done) return; done = true;
+    counters.forEach(function(el){
+      var target = parseFloat(el.getAttribute('data-count'));
+      var dur = 1100, start = null;
+      function step(ts){
+        if (!start) start = ts;
+        var p = Math.min((ts - start) / dur, 1);
+        el.textContent = Math.floor(p * target);
+        if (p < 1) requestAnimationFrame(step); else el.textContent = target;
+      }
+      requestAnimationFrame(step);
+    });
+  }
+  var journey = document.getElementById('journey');
+  if ('IntersectionObserver' in window){
+    var io2 = new IntersectionObserver(function(entries){ entries.forEach(function(e){ if (e.isIntersecting) runCounters(); }); }, {threshold:0.4});
+    io2.observe(journey);
+  } else { runCounters(); }
+
+  var sections = document.querySelectorAll('main section, .cta-band');
+  var navLinks = document.querySelectorAll('nav.nav-links a');
+  if ('IntersectionObserver' in window){
+    var io3 = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if (e.isIntersecting){
+          var id = e.target.getAttribute('id');
+          navLinks.forEach(function(a){ a.classList.toggle('active', a.getAttribute('href') === '#' + id); });
+        }
+      });
+    }, {threshold:0.5});
+    sections.forEach(function(s){ if (s.id) io3.observe(s); });
+  }
+
+  // ---- tree timeline ----
+  (function(){
+    var wrap = document.getElementById('treeWrap');
+    var panel = document.getElementById('tlPanel');
+    if (!wrap || !panel) return;
+    var leaves = wrap.querySelectorAll('.tl-leaf');
+
+    function activate(leaf){
+      leaves.forEach(function(n){ n.classList.remove('active'); n.removeAttribute('aria-selected'); });
+      leaf.classList.add('active'); leaf.setAttribute('aria-selected','true');
+      var tpl = document.getElementById(leaf.getAttribute('data-target'));
+      if (tpl) panel.innerHTML = tpl.innerHTML;
+    }
+    leaves.forEach(function(n){ n.addEventListener('click', function(){ activate(n); }); });
+    var initial = wrap.querySelector('.tl-leaf.active') || leaves[leaves.length-1];
+    if (initial){
+      var tpl0 = document.getElementById(initial.getAttribute('data-target'));
+      if (tpl0) panel.innerHTML = tpl0.innerHTML;
+    }
+
+    // stagger each leaf's reveal to roughly match when the tree "grows" past its height
+    var growDuration = 3100; // ms, matches the CSS clip-path transition
+    leaves.forEach(function(leaf){
+      var topPct = parseFloat(leaf.style.top) || 0;
+      var delay = Math.round(growDuration * (1 - topPct/100) * 0.9) + 150;
+      leaf.style.transitionDelay = delay + 'ms';
+    });
+
+    if ('IntersectionObserver' in window){
+      var io = new IntersectionObserver(function(entries){
+        entries.forEach(function(e){
+          if (e.isIntersecting){
+            wrap.classList.add('grown');
+            io.unobserve(wrap);
+            setTimeout(function(){
+              leaves.forEach(function(leaf){ leaf.style.transitionDelay = ''; });
+            }, growDuration + 1400);
+          }
+        });
+      }, {threshold:0.25});
+      io.observe(wrap);
+    } else {
+      wrap.classList.add('grown');
+      leaves.forEach(function(leaf){ leaf.style.transitionDelay = ''; });
+    }
+  })();
+
+  // ---- media: full channel view (about + playlists) rendering + inline playback ----
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  function renderChannel(key){
+    var container = document.getElementById('content-' + key);
+    if (!container || container.dataset.rendered) return;
+    var info = (typeof CHANNEL_INFO !== 'undefined' && CHANNEL_INFO[key]) || null;
+    var playlists = (info && info.playlists) || [];
+    var totalVideos = playlists.reduce(function(n,p){ return n + p.videos.length; }, 0);
+    var html = '';
+    if (info){
+      html += '<div class="channel-full-header">';
+      html += '<a class="channel-full-yt" href="' + info.url + '" target="_blank" rel="noopener">Visit ' + escapeHtml(info.name) + ' on YouTube ↗</a>';
+      html += '<span class="channel-full-count">' + playlists.length + ' playlists · ' + totalVideos + ' videos</span>';
+      html += '</div>';
+      if (info.about){
+        html += '<p class="channel-about">' + escapeHtml(info.about) + '</p>';
+      }
+    }
+    playlists.forEach(function(pl, pi){
+      html += '<details class="playlist"><summary><span class="pl-title">' + escapeHtml(pl.title) + '</span><span class="pl-count">' + pl.videos.length + ' video' + (pl.videos.length===1?'':'s') + '</span><span class="pl-chev">›</span></summary>';
+      html += '<ul class="video-list" data-playlist="' + pi + '"></ul></details>';
+    });
+    container.innerHTML = html || '<p class="placeholder-note">[CONTENT NEEDED]</p>';
+    container.dataset.rendered = '1';
+
+    // lazily render each playlist's videos the first time it's opened
+    container.querySelectorAll('.playlist').forEach(function(det, pi){
+      det.addEventListener('toggle', function(){
+        if (!det.open) return;
+        var ul = det.querySelector('.video-list');
+        if (ul.dataset.rendered) return;
+        ul.dataset.rendered = '1';
+        var videos = playlists[pi].videos;
+        var items = videos.map(function(v){
+          var thumb = 'https://i.ytimg.com/vi/' + v.id + '/mqdefault.jpg';
+          var ytUrl = 'https://www.youtube.com/watch?v=' + v.id;
+          return '' +
+            '<li class="video-row">' +
+              '<div class="video-row-main" data-play="' + v.id + '">' +
+                '<img class="video-thumb" src="' + thumb + '" alt="" loading="lazy">' +
+                '<div class="video-info"><span class="vt">' + escapeHtml(v.title || 'Untitled') + '</span><span class="vp">▶ Play on site</span></div>' +
+                '<a class="yt-ext-link" href="' + ytUrl + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">YouTube ↗</a>' +
+              '</div>' +
+              '<div class="video-player" data-slot="' + v.id + '"></div>' +
+            '</li>';
+        }).join('');
+        ul.innerHTML = items;
+      });
+    });
+  }
+
+  document.querySelectorAll('.watch-toggle').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var key = btn.getAttribute('data-channel');
+      var container = document.getElementById('content-' + key);
+      if (!container) return;
+      var isHidden = container.hasAttribute('hidden');
+      if (isHidden){
+        renderChannel(key);
+        container.removeAttribute('hidden');
+        btn.setAttribute('aria-expanded','true');
+        btn.childNodes[0].nodeValue = 'Hide details ';
+        container.scrollIntoView({behavior:'smooth', block:'nearest'});
+      } else {
+        container.setAttribute('hidden','');
+        btn.setAttribute('aria-expanded','false');
+        btn.childNodes[0].nodeValue = 'View more ';
+      }
+    });
+  });
+
+  document.addEventListener('click', function(e){
+    var row = e.target.closest('.video-row-main');
+    if (!row) return;
+    var id = row.getAttribute('data-play');
+    var li = row.closest('.video-row');
+    var slot = li.querySelector('.video-player');
+    var already = slot.classList.contains('open');
+    // close any other open player in the same list to keep things tidy
+    var list = li.closest('.video-list');
+    if (list){
+      list.querySelectorAll('.video-player.open').forEach(function(p){
+        if (p !== slot){ p.classList.remove('open'); p.innerHTML=''; }
+      });
+    }
+    if (already){
+      slot.classList.remove('open'); slot.innerHTML = '';
+    } else {
+      slot.innerHTML = '<iframe src="https://www.youtube.com/embed/' + id + '?autoplay=1" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>';
+      slot.classList.add('open');
+      slot.scrollIntoView({behavior: 'smooth', block: 'nearest'});
+    }
+  });
+
+  var burger = document.getElementById('burgerBtn');
+  var mmenu = document.getElementById('mobileMenu');
+  var mclose = document.getElementById('mobileClose');
+  if (burger){
+    burger.addEventListener('click', function(){ mmenu.classList.add('open'); });
+    mclose.addEventListener('click', function(){ mmenu.classList.remove('open'); });
+    mmenu.querySelectorAll('a').forEach(function(a){ a.addEventListener('click', function(){ mmenu.classList.remove('open'); }); });
+  }
+})();
+</script>
 </body>
 </html>
