@@ -101,7 +101,48 @@
     }
   })();
 
-  // ---- media: full channel view (about + playlists) rendering + inline playback ----
+  // ---- nav dropdowns (Manish Karn / Yog M Creations) ----
+  (function(){
+    var drops = document.querySelectorAll('.nav-drop');
+    drops.forEach(function(drop){
+      var btn = drop.querySelector('.nav-drop-btn');
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
+        var isOpen = drop.classList.contains('open');
+        drops.forEach(function(d){ d.classList.remove('open'); d.querySelector('.nav-drop-btn').setAttribute('aria-expanded','false'); });
+        if (!isOpen){ drop.classList.add('open'); btn.setAttribute('aria-expanded','true'); }
+      });
+    });
+    document.addEventListener('click', function(){
+      drops.forEach(function(d){ d.classList.remove('open'); d.querySelector('.nav-drop-btn').setAttribute('aria-expanded','false'); });
+    });
+    document.querySelectorAll('.nav-drop-menu a').forEach(function(a){
+      a.addEventListener('click', function(){
+        drops.forEach(function(d){ d.classList.remove('open'); });
+      });
+    });
+  })();
+
+  // ---- books: View more toggle ----
+  document.querySelectorAll('.book-more-toggle').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var key = btn.getAttribute('data-book');
+      var panel = document.getElementById('bookmore-' + key);
+      if (!panel) return;
+      var isHidden = panel.hasAttribute('hidden');
+      if (isHidden){
+        panel.removeAttribute('hidden');
+        btn.setAttribute('aria-expanded','true');
+        btn.childNodes[0].nodeValue = 'Show less ';
+      } else {
+        panel.setAttribute('hidden','');
+        btn.setAttribute('aria-expanded','false');
+        btn.childNodes[0].nodeValue = 'View more ';
+      }
+    });
+  });
+
+  // ---- media: full channel view (about + playlists) rendering, horizontal video flow + modal playback ----
   function escapeHtml(s){
     return String(s).replace(/[&<>"']/g, function(c){
       return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
@@ -117,42 +158,52 @@
     if (info){
       html += '<div class="channel-full-header">';
       html += '<a class="channel-full-yt" href="' + info.url + '" target="_blank" rel="noopener">Visit ' + escapeHtml(info.name) + ' on YouTube ↗</a>';
-      html += '<span class="channel-full-count">' + playlists.length + ' playlists · ' + totalVideos + ' videos</span>';
+      html += '<span class="channel-full-count">' + playlists.length + ' playlist' + (playlists.length===1?'':'s') + ' · ' + totalVideos + ' videos</span>';
       html += '</div>';
       if (info.about){
         html += '<p class="channel-about">' + escapeHtml(info.about) + '</p>';
       }
     }
     playlists.forEach(function(pl, pi){
-      html += '<details class="playlist"><summary><span class="pl-title">' + escapeHtml(pl.title) + '</span><span class="pl-count">' + pl.videos.length + ' video' + (pl.videos.length===1?'':'s') + '</span><span class="pl-chev">›</span></summary>';
-      html += '<ul class="video-list" data-playlist="' + pi + '"></ul></details>';
+      html += '<details class="playlist"' + (playlists.length === 1 ? ' open' : '') + '><summary><span class="pl-title">' + escapeHtml(pl.title) + '</span><span class="pl-count">' + pl.videos.length + ' video' + (pl.videos.length===1?'':'s') + '</span><span class="pl-chev">›</span></summary>';
+      html += '<div class="video-scroll-wrap"><div class="video-scroll" data-playlist="' + pi + '"></div></div></details>';
     });
     container.innerHTML = html || '<p class="placeholder-note">[CONTENT NEEDED]</p>';
     container.dataset.rendered = '1';
 
-    // lazily render each playlist's videos the first time it's opened
+    // lazily render each playlist's videos the first time it's opened, then animate them in left-to-right
     container.querySelectorAll('.playlist').forEach(function(det, pi){
-      det.addEventListener('toggle', function(){
-        if (!det.open) return;
-        var ul = det.querySelector('.video-list');
-        if (ul.dataset.rendered) return;
-        ul.dataset.rendered = '1';
+      function populate(){
+        var scroll = det.querySelector('.video-scroll');
+        if (scroll.dataset.rendered) return;
+        scroll.dataset.rendered = '1';
         var videos = playlists[pi].videos;
-        var items = videos.map(function(v){
+        var cards = videos.map(function(v){
           var thumb = 'https://i.ytimg.com/vi/' + v.id + '/mqdefault.jpg';
           var ytUrl = 'https://www.youtube.com/watch?v=' + v.id;
           return '' +
-            '<li class="video-row">' +
-              '<div class="video-row-main" data-play="' + v.id + '">' +
-                '<img class="video-thumb" src="' + thumb + '" alt="" loading="lazy">' +
-                '<div class="video-info"><span class="vt">' + escapeHtml(v.title || 'Untitled') + '</span><span class="vp">▶ Play on site</span></div>' +
-                '<a class="yt-ext-link" href="' + ytUrl + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">YouTube ↗</a>' +
+            '<div class="video-card" data-play="' + v.id + '">' +
+              '<div class="thumb-wrap">' +
+                '<img src="' + thumb + '" alt="" loading="lazy">' +
+                '<div class="play-badge"><span class="play-circle"><span class="tri"></span></span></div>' +
               '</div>' +
-              '<div class="video-player" data-slot="' + v.id + '"></div>' +
-            '</li>';
+              '<div class="vcard-body">' +
+                '<span class="vcard-title">' + escapeHtml(v.title || 'Untitled') + '</span>' +
+                '<a class="vcard-yt" href="' + ytUrl + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">YouTube ↗</a>' +
+              '</div>' +
+            '</div>';
         }).join('');
-        ul.innerHTML = items;
-      });
+        scroll.innerHTML = cards;
+        // staggered left-to-right entrance
+        var cardEls = scroll.querySelectorAll('.video-card');
+        requestAnimationFrame(function(){
+          cardEls.forEach(function(card, i){
+            setTimeout(function(){ card.classList.add('in'); }, Math.min(i, 14) * 55);
+          });
+        });
+      }
+      if (det.hasAttribute('open')) populate();
+      det.addEventListener('toggle', function(){ if (det.open) populate(); });
     });
   }
 
@@ -176,28 +227,34 @@
     });
   });
 
-  document.addEventListener('click', function(e){
-    var row = e.target.closest('.video-row-main');
-    if (!row) return;
-    var id = row.getAttribute('data-play');
-    var li = row.closest('.video-row');
-    var slot = li.querySelector('.video-player');
-    var already = slot.classList.contains('open');
-    // close any other open player in the same list to keep things tidy
-    var list = li.closest('.video-list');
-    if (list){
-      list.querySelectorAll('.video-player.open').forEach(function(p){
-        if (p !== slot){ p.classList.remove('open'); p.innerHTML=''; }
-      });
+  // ---- video modal playback ----
+  (function(){
+    var modal = document.getElementById('videoModal');
+    var player = document.getElementById('videoModalPlayer');
+    var backdrop = document.getElementById('videoModalBackdrop');
+    var closeBtn = document.getElementById('videoModalClose');
+    if (!modal || !player) return;
+
+    function openVideo(id){
+      player.innerHTML = '<iframe src="https://www.youtube.com/embed/' + id + '?autoplay=1" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>';
+      modal.removeAttribute('hidden');
     }
-    if (already){
-      slot.classList.remove('open'); slot.innerHTML = '';
-    } else {
-      slot.innerHTML = '<iframe src="https://www.youtube.com/embed/' + id + '?autoplay=1" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>';
-      slot.classList.add('open');
-      slot.scrollIntoView({behavior: 'smooth', block: 'nearest'});
+    function closeVideo(){
+      modal.setAttribute('hidden','');
+      player.innerHTML = '';
     }
-  });
+    document.addEventListener('click', function(e){
+      var card = e.target.closest('.video-card');
+      if (!card) return;
+      var id = card.getAttribute('data-play');
+      if (id) openVideo(id);
+    });
+    backdrop.addEventListener('click', closeVideo);
+    closeBtn.addEventListener('click', closeVideo);
+    document.addEventListener('keydown', function(e){
+      if (e.key === 'Escape' && !modal.hasAttribute('hidden')) closeVideo();
+    });
+  })();
 
   var burger = document.getElementById('burgerBtn');
   var mmenu = document.getElementById('mobileMenu');
