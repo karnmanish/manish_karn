@@ -214,7 +214,7 @@
     }
   })();
 
-  // ---- nav dropdowns (Manish Karn / Yog M Creations) ----
+  // ---- nav dropdowns ----
   (function(){
     var drops = document.querySelectorAll('.nav-drop');
     drops.forEach(function(drop){
@@ -255,16 +255,62 @@
       if (btn.classList.contains('proj-secondary-btn')){
         tag = btn.textContent.replace('→','').trim().toUpperCase();
       }
+      var isReader = btn.getAttribute('data-reader') === 'paper';
+      var isDeck = btn.getAttribute('data-deck') === 'true';
+      var isPdf = btn.getAttribute('data-pdf') === 'true';
+      var box = modal.querySelector('.article-modal-box');
+      box.classList.toggle('wide', isReader || isDeck || isPdf);
+      var readerControls = isReader
+        ? '<div class="reader-controls"><button class="reader-toggle-btn active" data-mode="v">⇕ Vertical</button><button class="reader-toggle-btn" data-mode="h">⇔ Horizontal</button></div>'
+        : '';
       content.innerHTML =
+        readerControls +
         '<span class="article-tag">' + tag + '</span><span class="article-date">' + date + '</span>' +
         '<h2>' + title + '</h2>' +
         '<div class="article-body">' + tpl.innerHTML + '</div>';
+      if (isReader){
+        var body = content.querySelector('.article-body');
+        content.querySelectorAll('.reader-toggle-btn').forEach(function(rbtn){
+          rbtn.addEventListener('click', function(){
+            content.querySelectorAll('.reader-toggle-btn').forEach(function(b){ b.classList.remove('active'); });
+            rbtn.classList.add('active');
+            body.classList.toggle('h-mode', rbtn.getAttribute('data-mode') === 'h');
+          });
+        });
+      }
+      if (isDeck){
+        var slides = content.querySelectorAll('.deck-slide-img');
+        if (slides.length > 1){
+          var idx = 0;
+          var nav = document.createElement('div');
+          nav.className = 'deck-nav';
+          nav.innerHTML = '<button type="button" data-dir="-1">← Prev</button>' +
+            '<span class="deck-counter">Slide 1 / ' + slides.length + '</span>' +
+            '<button type="button" data-dir="1">Next →</button>';
+          content.querySelector('.deck-viewer').appendChild(nav);
+          var counter = nav.querySelector('.deck-counter');
+          var prevBtn = nav.querySelector('[data-dir="-1"]');
+          var nextBtn = nav.querySelector('[data-dir="1"]');
+          function showSlide(i){
+            slides[idx].classList.remove('active');
+            idx = Math.max(0, Math.min(slides.length - 1, i));
+            slides[idx].classList.add('active');
+            counter.textContent = 'Slide ' + (idx + 1) + ' / ' + slides.length;
+            prevBtn.disabled = idx === 0;
+            nextBtn.disabled = idx === slides.length - 1;
+          }
+          prevBtn.addEventListener('click', function(){ showSlide(idx - 1); });
+          nextBtn.addEventListener('click', function(){ showSlide(idx + 1); });
+          showSlide(0);
+        }
+      }
       modal.removeAttribute('hidden');
-      modal.querySelector('.article-modal-box').scrollTop = 0;
+      box.scrollTop = 0;
     }
     function closeArticle(){
       modal.setAttribute('hidden','');
       content.innerHTML = '';
+      modal.querySelector('.article-modal-box').classList.remove('wide');
     }
     document.querySelectorAll('.proj-read-btn').forEach(function(btn){
       btn.addEventListener('click', function(){ openArticle(btn); });
@@ -273,74 +319,6 @@
     closeBtn.addEventListener('click', closeArticle);
     document.addEventListener('keydown', function(e){
       if (e.key === 'Escape' && !modal.hasAttribute('hidden')) closeArticle();
-    });
-  })();
-
-  // ---- books: View more toggle ----
-  document.querySelectorAll('.book-more-toggle').forEach(function(btn){
-    btn.addEventListener('click', function(){
-      var key = btn.getAttribute('data-book');
-      var panel = document.getElementById('bookmore-' + key);
-      if (!panel) return;
-      var isHidden = panel.hasAttribute('hidden');
-      if (isHidden){
-        panel.removeAttribute('hidden');
-        btn.setAttribute('aria-expanded','true');
-        btn.childNodes[0].nodeValue = 'Show less ';
-      } else {
-        panel.setAttribute('hidden','');
-        btn.setAttribute('aria-expanded','false');
-        btn.childNodes[0].nodeValue = 'View more ';
-      }
-    });
-  });
-
-  // ---- media: populate each channel's live preview thumbnail from CHANNEL_INFO ----
-  function escapeHtml(s){
-    return String(s).replace(/[&<>"']/g, function(c){
-      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
-    });
-  }
-  document.querySelectorAll('.channel-preview').forEach(function(link){
-    var key = link.getAttribute('data-channel');
-    var info = (typeof CHANNEL_INFO !== 'undefined' && CHANNEL_INFO[key]) || null;
-    var firstVideo = info && info.playlists && info.playlists[0] && info.playlists[0].videos[0];
-    if (!firstVideo) { link.style.display = 'none'; return; }
-    var img = link.querySelector('.channel-preview-thumb');
-    img.src = 'https://i.ytimg.com/vi/' + firstVideo.id + '/mqdefault.jpg';
-    img.alt = firstVideo.title || '';
-    link.href = 'https://www.youtube.com/watch?v=' + firstVideo.id;
-    link.setAttribute('data-play', firstVideo.id);
-  });
-
-  // ---- video modal playback ----
-  (function(){
-    var modal = document.getElementById('videoModal');
-    var player = document.getElementById('videoModalPlayer');
-    var backdrop = document.getElementById('videoModalBackdrop');
-    var closeBtn = document.getElementById('videoModalClose');
-    if (!modal || !player) return;
-
-    function openVideo(id){
-      player.innerHTML = '<iframe src="https://www.youtube.com/embed/' + id + '?autoplay=1" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>';
-      modal.removeAttribute('hidden');
-    }
-    function closeVideo(){
-      modal.setAttribute('hidden','');
-      player.innerHTML = '';
-    }
-    document.addEventListener('click', function(e){
-      var card = e.target.closest('[data-play]');
-      if (!card) return;
-      var id = card.getAttribute('data-play');
-      if (!id) return;
-      e.preventDefault();
-      openVideo(id);
-    });
-    backdrop.addEventListener('click', closeVideo);
-    closeBtn.addEventListener('click', closeVideo);
-    document.addEventListener('keydown', function(e){
-      if (e.key === 'Escape' && !modal.hasAttribute('hidden')) closeVideo();
     });
   })();
 
