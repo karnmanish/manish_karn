@@ -1,60 +1,59 @@
 # Manish Karn — Personal Website
 
-A single-page personal site: résumé timeline, research, teaching experience,
-Yog M Creations (YouTube channels + books), built as a static site
-(HTML + CSS + JS, no build step required).
+A single-page personal site covering Manish Karn's academic work, the Yog Manish
+spiritual/creative practice, published books, and content channels.
 
-## Files
+## Structure
 
-- `index.html` — page structure and content
-- `styles.css` — all styling
-- `data.js` — channel/playlist/video data (loaded before `script.js`)
-- `script.js` — interactivity (nav, timeline tree animation, media playback, etc.)
+```
+index.html                  — the site (one page, all sections)
+assets/
+  css/styles.css            — all styles
+  js/script.js               — nav, scroll-spy, reader, gallery behaviour
+  papers/                    — attached PDFs (technical papers/articles)
+  images/                    — page thumbnails + certificate photos
+```
+
+Everything is plain HTML/CSS/JS — no build step, no dependencies to install.
 
 ## Publish on GitHub Pages
 
-1. **Create a new repository** on GitHub (e.g. `manish-karn-site`). It can be
-   public or private — GitHub Pages needs a public repo unless you're on a
-   paid plan that supports Pages for private repos.
+1. Create a new GitHub repository and push this folder's contents to it
+   (keep `index.html` at the repository root).
+2. In the repo, go to **Settings → Pages**.
+3. Under **Build and deployment → Source**, choose **Deploy from a branch**.
+4. Pick the branch (usually `main`) and the `/ (root)` folder, then **Save**.
+5. GitHub will publish the site at `https://<username>.github.io/<repo-name>/`
+   within a minute or two.
 
-2. **Upload these four files** to the repository root — `index.html`,
-   `styles.css`, `data.js`, `script.js` — either by dragging them into the
-   GitHub web UI ("Add file → Upload files") or via git:
+## Run it locally
 
-   ```bash
-   git init
-   git add index.html styles.css data.js script.js README.md
-   git commit -m "Initial site"
-   git branch -M main
-   git remote add origin https://github.com/<your-username>/<repo-name>.git
-   git push -u origin main
-   ```
+No server is required — just open `index.html` directly in a browser.
+If you prefer a local server (some browsers restrict local file access for
+certain features), from this folder run:
 
-3. **Enable Pages**: in the repository, go to **Settings → Pages**. Under
-   "Build and deployment", set **Source** to **Deploy from a branch**, pick
-   the **main** branch and **/ (root)** folder, then **Save**.
+```
+python3 -m http.server 8000
+```
 
-4. GitHub will publish the site at:
+then visit `http://localhost:8000`.
 
-   ```
-   https://<your-username>.github.io/<repo-name>/
-   ```
+## Adding content later
 
-   It can take a minute or two for the first deploy to go live. Every time
-   you push a change to `main`, the site rebuilds automatically.
-
-5. **Optional — custom domain**: if you own a domain, add a `CNAME` file
-   to the repo root containing just your domain (e.g. `manishkarn.com`),
-   then point your domain's DNS at GitHub Pages per
-   [GitHub's custom domain docs](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site).
+- **A new paper/article/project card**: copy an existing `.doc-card` block in
+  `index.html`, add its PDF to `assets/papers/`, and render a thumbnail with:
+  `pdftoppm -f 1 -l 1 -jpeg -r 150 assets/papers/yourfile.pdf assets/images/yourfile-thumb`
+  Wire its "Abstract" button to `openAbstractFromEl(title, elementId)` and its
+  "Read full paper" button to `toggleInlineReader(this, title, 'assets/papers/yourfile.pdf')`.
+- **A new certificate**: add an entry to the `.eca-grid` block, following the
+  existing `.eca-card` pattern, with the image in `assets/images/`.
+- **Placeholders**: sections and fields marked with the dashed "Placeholder —
+  awaiting …" tag are intentionally left for real content — search `ph-tag`
+  in `index.html` to find them all.
 
 ## Notes
 
-- Everything runs client-side — no server or database needed, so GitHub
-  Pages (which only serves static files) is a good fit.
-- Fonts load from Google Fonts and YouTube embeds load from YouTube at
-  runtime — both need the visitor to have normal internet access, same as
-  any other site.
-- To update channel/video/playlist data later, edit `data.js` — it's a
-  single `CHANNEL_INFO` object keyed by channel (`bhavatu`, `storykahani`,
-  and `mysteries` once you have that channel's details).
+- Fonts (Fraunces, Inter) load from Google Fonts — an internet connection is
+  needed for them to render; the page still works offline with fallback fonts.
+- PDF embeds use the browser's native PDF viewer (Chrome, Firefox, Edge,
+  Safari all support this) — no external library required.
